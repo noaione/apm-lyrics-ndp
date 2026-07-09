@@ -14,8 +14,6 @@ A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music f
 3. Fetches syllable lyrics (TTML) for the catalog ID and returns them to Navidrome.
 4. Caches the resulting lyrics for a configurable number of days.
 
-Because there's no public API for step 2, the plugin scrapes the Apple Music web player's JavaScript bundle to recover the JWT it uses. This is inherently fragile — if Apple changes the web player's markup or token format, JWT extraction may break until the plugin is updated.
-
 ## Requirements
 
 - Navidrome with plugin support enabled.
@@ -38,13 +36,13 @@ Because there's no public API for step 2, the plugin scrapes the Apple Music web
 
 ## Configuration
 
-| Field         | Description                                                                 |
-| ------------- | ----------------------------------------------------------------------------- |
-| `media_token` | Your Apple Music `media-user-token`, required to call the private API.        |
-| `user_agent`  | The `User-Agent` used when logging in. Must match the token's origin session. |
-| `storefront`     | Your Apple Music account's storefront country code (e.g. `us`, `gb`, `jp`).    |
-| `cache_days`  | How many days to cache fetched lyrics for (1-30, default 7).                   |
-| `skip_cache`  | Always re-fetch from Apple Music instead of using the cache. Useful for debugging/updating lyrics. |
+| Field                  | Description                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media_token`          | Your Apple Music `media-user-token`, required to call the private API.                                                                                     |
+| `user_agent`           | The `User-Agent` used when logging in. Must match the token's origin session.                                                                              |
+| `storefront`           | Your Apple Music account's storefront country code (e.g. `us`, `gb`, `jp`).                                                                                |
+| `cache_days`           | How many days to cache fetched lyrics for (1-30, default 7).                                                                                               |
+| `skip_cache`           | Always re-fetch from Apple Music instead of using the cache. Useful for debugging/updating lyrics.                                                         |
 | `translation_language` | The translation language, should be something that is allowed for your account (You can check by playing song then opening lyrics in the Apple Music Beta) |
 
 ### Getting `media_token` and `user_agent`
