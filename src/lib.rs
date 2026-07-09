@@ -16,7 +16,7 @@ const API_BASE_URL: &str = "https://amp-api.music.apple.com";
 
 const MEDIA_TOKEN: &str = "media_token";
 const USER_AGENT: &str = "user_agent";
-const ACCOUNT_COUNTRY: &str = "storefront";
+const STOREFRONT: &str = "storefront";
 const CACHE_DAYS: &str = "cache_days";
 const SKIP_CACHE: &str = "skip_cache";
 const TRANSLATION_LANGUAGE: &str = "translation_language";
@@ -60,6 +60,7 @@ impl Lyrics for APMLyricsFetcher {
         let real_jwt = match jwt_cached {
             Some(jwt) => jwt,
             None => {
+                info!("No JWT found in cache, fetching new one...");
                 let fetched_jwt = fetch_current_active_jwt(&config)
                     .map_err(|err| anyhow_string("fetch_current_active_jwt", err))?;
 
@@ -72,8 +73,14 @@ impl Lyrics for APMLyricsFetcher {
         };
 
         debug!("APM Current JWT are: {}", &real_jwt);
+        info!("Fetching lyrics for APM Catalog ID: {}", apm_catalog);
         let lyrics_data = fetch_lyrics_for_catalog_id_with_cache(apm_catalog, &real_jwt, &config)
             .map_err(|err| anyhow_string("fetch_lyrics_for_catalog_id", err))?;
+        info!(
+            "Found a total of {} lyrics for {}",
+            lyrics_data.len(),
+            apm_catalog
+        );
 
         Ok(GetLyricsResponse {
             lyrics: lyrics_data,
@@ -85,7 +92,7 @@ impl Lyrics for APMLyricsFetcher {
 struct LoadedConfig {
     media_token: String,
     user_agent: String,
-    account_country: String,
+    storefront: String,
     cache_days: i64,
     skip_cache: bool,
     translation_language: String,
@@ -101,21 +108,21 @@ impl LoadedConfig {
             .map_err(|e| anyhow_string("get_config[user_agent]", e))?
             .ok_or(Error::new("Configuration not set for user_agent"))?;
 
-        let account_country = nd_pdk::host::config::get(ACCOUNT_COUNTRY)
-            .map_err(|e| anyhow_string("get_config[country]", e))?
-            .ok_or(Error::new("Configuration not set for country"))?;
+        let storefront = nd_pdk::host::config::get(STOREFRONT)
+            .map_err(|e| anyhow_string("get_config[storefront]", e))?
+            .ok_or(Error::new("Configuration not set for storefront"))?;
 
         let cache_days = nd_pdk::host::config::get_int(CACHE_DAYS)
             .map_err(|e| anyhow_string("get_config[cache_days]", e))?
             .ok_or(Error::new("Configuration not set for cache_days"))?;
 
-        if cache_days < 1 || cache_days > 30 {
+        if !(1..=30).contains(&cache_days) {
             return Err(Error::new("cache_days must be between 1 and 30"));
         }
 
         let skip_cache = nd_pdk::host::config::get(SKIP_CACHE)
             .map_err(|e| anyhow_string("get_config[skip_cache]", e))?
-            .and_then(|v| Some(v.to_lowercase() == "true"))
+            .map(|v| v.to_lowercase() == "true")
             .unwrap_or(false);
 
         let translation_language = nd_pdk::host::config::get(TRANSLATION_LANGUAGE)
@@ -125,7 +132,7 @@ impl LoadedConfig {
         Ok(Self {
             media_token,
             user_agent,
-            account_country,
+            storefront,
             cache_days,
             skip_cache,
             translation_language,
@@ -178,15 +185,13 @@ fn find_script_urls(html: &str) -> Vec<String> {
         .collect()
 }
 
-// Apple's web player signs its MusicKit JWTs with a fixed ES256 header
-// ("kid":"WebPlayKid"), so we can look for that constant instead of trying
-// to reverse-engineer which variable in the bundle holds the token.
+// The web player embeds its MusicKit JWT as a quoted string literal
+// (`="eyJ..."`), so just grab everything between that opening quote and
+// the next one rather than trying to pattern-match the token's contents.
 fn find_jwt_token(js: &str) -> Option<String> {
-    let re = Regex::new(
-        r"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
-    )
-    .expect("valid regex");
-    re.find(js).map(|m| m.as_str().to_string())
+    let start = js.find("=\"eyJ")? + 2;
+    let end = js[start..].find('"')?;
+    Some(js[start..start + end].to_string())
 }
 
 fn fetch_current_active_jwt(config: &LoadedConfig) -> Result<String, nd_pdk::host::Error> {
@@ -196,7 +201,7 @@ fn fetch_current_active_jwt(config: &LoadedConfig) -> Result<String, nd_pdk::hos
     basic_headers.insert("Referer".to_string(), format!("{}/", BETA_URL));
 
     let home_html = fetch_text(
-        format!("{}/{}/home", BETA_URL, config.account_country),
+        format!("{}/{}/home", BETA_URL, config.storefront),
         basic_headers.clone(),
     )?;
 
@@ -250,8 +255,10 @@ fn fetch_lyrics_for_catalog_id(
     // https://amp-api.music.apple.com/v1/catalog/id/songs/6777110273/syllable-lyrics?l[lyrics]=en-gb&l[script]=en-Latn&extend=ttmlLocalizations
     let target_url = format!(
         "{}/v1/catalog/{}/songs/{}/syllable-lyrics?l[lyrics]={}&l[script]=und-Latn&extend=ttmlLocalizations",
-        API_BASE_URL, config.account_country, config.translation_language, catalog_id
+        API_BASE_URL, config.storefront, catalog_id, config.translation_language
     );
+
+    info!("Requesting for {}: {}", catalog_id, target_url);
 
     let req = nd_pdk::host::http::HTTPRequest {
         method: "GET".to_string(),
@@ -267,21 +274,41 @@ fn fetch_lyrics_for_catalog_id(
         catalog_id
     )))?;
 
+    debug_http_response(&format!("lyrics[{}]", catalog_id), &lyrics_resp);
     let lyrics_data = serde_json::from_slice::<SyllableLyricsResponse>(&lyrics_resp.body)?;
 
     let mapped_lyrics: Vec<LyricsText> = lyrics_data
         .data
         .iter()
-        .filter_map(|data| match &data.attributes.ttml_localizations {
-            Some(ttml) => Some(LyricsText {
-                lang: "xxx".to_string(),
-                text: ttml.to_string(),
-            }),
-            None => None,
+        .filter_map(|data| {
+            data.attributes
+                .ttml_localizations
+                .as_ref()
+                .map(|ttml| LyricsText {
+                    lang: "xxx".to_string(),
+                    text: ttml.to_string(),
+                })
         })
         .collect();
 
     Ok(mapped_lyrics)
+}
+
+fn debug_http_response(thing: &str, resp: &nd_pdk::host::http::HTTPResponse) {
+    debug!("HTTP response code for {}: {:?}", thing, resp.status_code);
+    debug!("HTTP response headers for {}: {:?}", thing, resp.headers);
+
+    let cloned_body = resp.body.clone();
+
+    // maybe decode to string for body
+    match String::from_utf8(cloned_body) {
+        Ok(body) => debug!("HTTP response body for {}: {:?}", thing, body),
+        Err(_) => debug!(
+            "HTTP response body for {}: length {:?}",
+            thing,
+            resp.body.len()
+        ),
+    }
 }
 
 fn fetch_lyrics_for_catalog_id_with_cache(

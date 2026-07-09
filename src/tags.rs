@@ -53,7 +53,7 @@ fn get_riff_catalog_id(tag: &RiffInfoList) -> Option<String> {
 fn get_mp4_catalog_id(tag: &mp4ameta::Tag) -> Result<Option<String>, WantError> {
     let cnid = Fourcc(*b"cnID");
 
-    for data in tag.data_of(&cnid) {
+    if let Some(data) = tag.data_of(&cnid).next() {
         match data {
             Data::BeSigned(bytes) | Data::Reserved(bytes) => {
                 let uint_data = be_uint(bytes);

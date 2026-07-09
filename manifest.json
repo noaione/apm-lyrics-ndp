@@ -119,7 +119,7 @@
                             },
                             {
                                 "type": "Control",
-                                "scope": "#/properties/country",
+                                "scope": "#/properties/storefront",
                                 "options": {
                                     "size": 3
                                 }
@@ -135,6 +135,10 @@
                         "elements": [
                             {
                                 "type": "Control",
+                                "scope": "#/properties/translation_language"
+                            },
+                            {
+                                "type": "Control",
                                 "scope": "#/properties/cache_days",
                                 "options": {
                                     "size": 3
@@ -143,10 +147,6 @@
                             {
                                 "type": "Control",
                                 "scope": "#/properties/skip_cache"
-                            },
-                            {
-                                "type": "Control",
-                                "scope": "#/properties/translation_language"
                             }
                         ]
                     }
