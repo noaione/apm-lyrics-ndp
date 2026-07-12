@@ -286,7 +286,7 @@ checksum = "453e991b2efe96c288cbc2d03a19e353504294559ecb6c03067fff5bd824616d"
 [[package]]
 name = "nd-pdk"
 version = "0.1.0"
-source = "git+https://github.com/navidrome/navidrome.git?rev=4cbba2ae49401d7ccda606a2dbfcbee41d787857#4cbba2ae49401d7ccda606a2dbfcbee41d787857"
+source = "git+https://github.com/navidrome/navidrome.git?rev=be10f89c117925fabf10394b8d2962a370108b97#be10f89c117925fabf10394b8d2962a370108b97"
 dependencies = [
  "extism-pdk",
  "nd-pdk-capabilities",
@@ -299,7 +299,7 @@ dependencies = [
 [[package]]
 name = "nd-pdk-capabilities"
 version = "0.1.0"
-source = "git+https://github.com/navidrome/navidrome.git?rev=4cbba2ae49401d7ccda606a2dbfcbee41d787857#4cbba2ae49401d7ccda606a2dbfcbee41d787857"
+source = "git+https://github.com/navidrome/navidrome.git?rev=be10f89c117925fabf10394b8d2962a370108b97#be10f89c117925fabf10394b8d2962a370108b97"
 dependencies = [
  "base64",
  "extism-pdk",
@@ -311,7 +311,7 @@ dependencies = [
 [[package]]
 name = "nd-pdk-host"
 version = "0.1.0"
-source = "git+https://github.com/navidrome/navidrome.git?rev=4cbba2ae49401d7ccda606a2dbfcbee41d787857#4cbba2ae49401d7ccda606a2dbfcbee41d787857"
+source = "git+https://github.com/navidrome/navidrome.git?rev=be10f89c117925fabf10394b8d2962a370108b97#be10f89c117925fabf10394b8d2962a370108b97"
 dependencies = [
  "base64",
  "extism-pdk",
@@ -323,7 +323,7 @@ dependencies = [
 [[package]]
 name = "nd-pdk-types"
 version = "0.1.0"
-source = "git+https://github.com/navidrome/navidrome.git?rev=4cbba2ae49401d7ccda606a2dbfcbee41d787857#4cbba2ae49401d7ccda606a2dbfcbee41d787857"
+source = "git+https://github.com/navidrome/navidrome.git?rev=be10f89c117925fabf10394b8d2962a370108b97#be10f89c117925fabf10394b8d2962a370108b97"
 dependencies = [
  "base64",
  "serde",
@@ -416,9 +416,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.12.4"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1292b7759ae1cb9ec195452d1390a074f0cd8541ab7a5a8c31cd6db45d4a6ba"
+checksum = "2a0e75113e14dc5acb068cd0786884f214f1312650a3d36d269f5c4f3cdee8a2"
 dependencies = [
  "aho-corasick",
  "memchr",
