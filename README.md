@@ -37,21 +37,20 @@ A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music f
 
 ## Configuration
 
-| Field                  | Description                                                                                                                                                |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `media_token`          | Your Apple Music `media-user-token`, required to call the private API.                                                                                     |
-| `user_agent`           | The `User-Agent` used when logging in. Must match the token's origin session.                                                                              |
-| `storefront`           | Your Apple Music account's storefront country code (e.g. `us`, `gb`, `jp`).                                                                                |
-| `cache_days`           | How many days to cache fetched lyrics for (1-30, default 7).                                                                                               |
-| `skip_cache`           | Always re-fetch from Apple Music instead of using the cache. Useful for debugging/updating lyrics.                                                         |
-| `translation_language` | The translation language, should be something that is allowed for your account (You can check by playing song then opening lyrics in the Apple Music Beta) |
+| Field                  | Description                                                                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media_token`          | Your Apple Music `media-user-token`, required to call the private API.                                                                                                |
+| `user_agent`           | The `User-Agent` used when logging in. Must match the token's origin session.                                                                                         |
+| `storefront`           | Your Apple Music account's storefront country code (e.g. `us`, `gb`, `jp`).                                                                                           |
+| `cache_days`           | How many days to cache fetched lyrics for (1-30, default 7).                                                                                                          |
+| `skip_cache`           | Always re-fetch from Apple Music instead of using the cache. Useful for debugging/updating lyrics.                                                                    |
+| `translation_language` | The translation language, should be something that is allowed for your account (You can check by playing song then opening lyrics in the Apple Music Beta), optional. |
 
 ### Getting `media_token` and `user_agent`
 
 1. Log into [beta.music.apple.com](https://beta.music.apple.com) in a browser, with an account that has an active Apple Music subscription.
 2. Play a music track that has lyrics available (e.g. a song from the Apple Music catalog).
 3. Open your browser's developer tools and inspect a request made to `amp-api.music.apple.com`.
-   - Or find request going to `syllable-lyrics` in the network tab.
 4. Copy the `media-user-token` request header value into `media_token`.
 5. Copy that same request's `User-Agent` header into `user_agent` — Apple ties the session to the exact user agent it was issued with, so it must match.
 6. Set `storefront` to the storefront your account is registered to.

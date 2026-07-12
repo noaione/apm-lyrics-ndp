@@ -5,7 +5,7 @@ use nd_pdk::{
     host::library::get_library,
     lyrics::{Error, GetLyricsResponse, Lyrics, LyricsText},
 };
-use regex::Regex;
+use regex::regex;
 
 use crate::models::SyllableLyricsResponse;
 mod models;
@@ -95,7 +95,7 @@ struct LoadedConfig {
     storefront: String,
     cache_days: i64,
     skip_cache: bool,
-    translation_language: String,
+    translation_language: Option<String>,
 }
 
 impl LoadedConfig {
@@ -126,8 +126,7 @@ impl LoadedConfig {
             .unwrap_or(false);
 
         let translation_language = nd_pdk::host::config::get(TRANSLATION_LANGUAGE)
-            .map_err(|e| anyhow_string("get_config[translation_language]", e))?
-            .unwrap_or("en-GB".to_string());
+            .map_err(|e| anyhow_string("get_config[translation_language]", e))?;
 
         Ok(Self {
             media_token,
@@ -179,7 +178,7 @@ fn resolve_asset_url(script_src: &str) -> String {
 }
 
 fn find_script_urls(html: &str) -> Vec<String> {
-    let re = Regex::new(r#"<script[^>]+src="([^"]+\.js)""#).expect("valid regex");
+    let re = regex!(r#"<script[^>]+src="([^"]+\.js)""#);
     re.captures_iter(html)
         .filter_map(|caps| caps.get(1).map(|m| m.as_str().to_string()))
         .collect()
@@ -253,10 +252,17 @@ fn fetch_lyrics_for_catalog_id(
     );
 
     // https://amp-api.music.apple.com/v1/catalog/id/songs/6777110273/syllable-lyrics?l[lyrics]=en-gb&l[script]=en-Latn&extend=ttmlLocalizations
-    let target_url = format!(
-        "{}/v1/catalog/{}/songs/{}/syllable-lyrics?l[lyrics]={}&l[script]=und-Latn&extend=ttmlLocalizations",
-        API_BASE_URL, config.storefront, catalog_id, config.translation_language
-    );
+    let target_url = if let Some(tl_lang) = &config.translation_language {
+        format!(
+            "{}/v1/catalog/{}/songs/{}/syllable-lyrics?l[lyrics]={}&l[script]=und-Latn&extend=ttmlLocalizations",
+            API_BASE_URL, config.storefront, catalog_id, tl_lang
+        )
+    } else {
+        format!(
+            "{}/v1/catalog/{}/songs/{}/syllable-lyrics?l[script]=und-Latn&extend=ttmlLocalizations",
+            API_BASE_URL, config.storefront, catalog_id
+        )
+    };
 
     info!("Requesting for {}: {}", catalog_id, target_url);
 
