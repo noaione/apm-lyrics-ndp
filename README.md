@@ -5,7 +5,8 @@
 A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music for tracks that are already tagged with an Apple Music/iTunes catalog ID.
 
 > [!IMPORTANT]
-> This plugin requires an active Apple Music subscription, and only works for tracks that already carry an iTunes Catalog ID tag (e.g. files purchased from, or matched against, the iTunes/Apple Music catalog). It does not search by title/artist.
+> This plugin requires an active Apple Music subscription, and only works for tracks that already carry an iTunes Catalog ID tag (e.g. files purchased from, or matched against, the iTunes/Apple Music catalog). It does not search by title/artist.<br />
+> **If you want search-based lyrics, consider using [navidrome-lyrics-plugin](https://github.com/J0R6IT0/navidrome-lyrics-plugin) instead.**
 
 ## How it works
 
@@ -16,7 +17,7 @@ A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music f
 
 ## Requirements
 
-- Navidrome with plugin support enabled.
+- Navidrome with plugin support enabled. (Recommended running on v0.63.0+ for syllable lyrics support)
 - An active Apple Music subscription.
 - Tracks tagged with their Apple Music/iTunes catalog ID.
 
@@ -26,11 +27,11 @@ A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music f
 2. Add `apm-lyrics-ndp` to the `LyricsPriority` [configuration option](https://www.navidrome.org/docs/usage/configuration/options/#:~:text=true-,LyricsPriority,-ND_LYRICSPRIORITY), e.g.:
    ```toml
    # navidrome.toml
-   LyricsPriority = ".ttml,embedded,apm-lyrics-ndp,.lrc"
+   LyricsPriority = ".ttml,apm-lyrics-ndp,embedded,.lrc"
    ```
    Or via an environment variable:
    ```
-   ND_LYRICSPRIORITY=.ttml,embedded,apm-lyrics-ndp,.lrc
+   ND_LYRICSPRIORITY=.ttml,apm-lyrics-ndp,embedded,.lrc
    ```
 3. Restart Navidrome, then enable and configure the plugin under **Settings > Plugins**.
 
@@ -48,10 +49,12 @@ A Navidrome plugin that fetches synced (syllable/TTML) lyrics from Apple Music f
 ### Getting `media_token` and `user_agent`
 
 1. Log into [beta.music.apple.com](https://beta.music.apple.com) in a browser, with an account that has an active Apple Music subscription.
-2. Open your browser's developer tools and inspect a request made to `amp-api.music.apple.com`.
-3. Copy the `media-user-token` request header value into `media_token`.
-4. Copy that same request's `User-Agent` header into `user_agent` — Apple ties the session to the exact user agent it was issued with, so it must match.
-5. Set `storefront` to the storefront your account is registered to.
+2. Play a music track that has lyrics available (e.g. a song from the Apple Music catalog).
+3. Open your browser's developer tools and inspect a request made to `amp-api.music.apple.com`.
+   - Or find request going to `syllable-lyrics` in the network tab.
+4. Copy the `media-user-token` request header value into `media_token`.
+5. Copy that same request's `User-Agent` header into `user_agent` — Apple ties the session to the exact user agent it was issued with, so it must match.
+6. Set `storefront` to the storefront your account is registered to.
 
 ## Permissions
 

@@ -31,3 +31,32 @@ jobs:
         with:
           name: apm-lyrics-ndp
           path: apm-lyrics-ndp.ndp
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: apm-lyrics-ndp
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: apm-lyrics-ndp.ndp
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apm-lyrics-ndp.ndp
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, '-') }}
