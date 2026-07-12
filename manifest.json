@@ -2,7 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/navidrome/navidrome/master/plugins/manifest-schema.json",
     "name": "Apple Music Lyrics Fetcher",
     "author": "noaione",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Automatically fetch Apple Music Lyrics when needed",
     "config": {
         "schema": {
