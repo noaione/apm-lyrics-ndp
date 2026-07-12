@@ -50,6 +50,7 @@ jobs:
           name: apm-lyrics-ndp
 
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: apm-lyrics-ndp.ndp
@@ -60,3 +61,7 @@ jobs:
           files: apm-lyrics-ndp.ndp
           generate_release_notes: true
           prerelease: ${{ contains(github.ref, '-') }}
+          body: |
+            **Full changelog**: ${{ github.server_url }}/${{ github.repository }}/commits/${{ github.ref_name }}
+
+            **Build provenance attestation:** ${{ steps.attest.outputs.attestation-url }}
