@@ -13,13 +13,20 @@ use lofty::mpeg::MpegFile;
 use lofty::musepack::MpcFile;
 use lofty::ogg::{OpusFile, SpeexFile, VorbisComments, VorbisFile};
 use lofty::wavpack::WavPackFile;
-use mp4ameta::{Data, Fourcc};
+use mp4ameta::{
+    Data, Fourcc,
+    ident::{APPLE_ITUNES_MEAN, FreeformIdentStatic},
+};
 
 type WantError = nd_pdk::lyrics::Error;
 
 const VORBIS_CATALOG_ID_KEY: &str = "ITUNESCATALOGID";
 const ID3_CATALOG_ID_DESCRIPTION: &str = "iTunes Catalog ID";
 const CATALOG_KEYS: &[&str] = &["iTunesCatalogId", "ITUNESCATALOGID", "iTunes Catalog ID"];
+
+const MP4_CATALOG_ID: Fourcc = Fourcc(*b"cnID");
+const MP4_ITUNES_CUSTOM_CATALOG_ID: FreeformIdentStatic =
+    FreeformIdentStatic::new_static(APPLE_ITUNES_MEAN, "ITUNESCATALOGID");
 
 fn minimal_options() -> ParseOptions {
     ParseOptions::new()
@@ -51,24 +58,25 @@ fn get_riff_catalog_id(tag: &RiffInfoList) -> Option<String> {
 }
 
 fn get_mp4_catalog_id(tag: &mp4ameta::Tag) -> Result<Option<String>, WantError> {
-    let cnid = Fourcc(*b"cnID");
-
-    if let Some(data) = tag.data_of(&cnid).next() {
-        match data {
-            Data::BeSigned(bytes) | Data::Reserved(bytes) => {
-                let uint_data = be_uint(bytes);
-                return Ok(uint_data.map(|uint| uint.to_string()));
-            }
-            Data::Utf8(enc_string) | Data::Utf16(enc_string) => {
-                return Ok(Some(enc_string.to_string()));
-            }
-            other => {
-                return Err(WantError::new(format!(
-                    "mp4a_meta_read failed: unexpected data type: {:?}",
-                    other
-                )));
-            }
+    let process_data = |data: &Data, mode: &'static str| match data {
+        Data::BeSigned(bytes) | Data::Reserved(bytes) => {
+            let uint_data = be_uint(bytes);
+            Ok(uint_data.map(|uint| uint.to_string()))
         }
+        Data::Utf8(enc_string) | Data::Utf16(enc_string) => Ok(Some(enc_string.to_string())),
+        other => Err(WantError::new(format!(
+            "mp4a_meta_read failed: unexpected data type: {:?} for {}",
+            other, mode
+        ))),
+    };
+
+    if let Some(data) = tag.data_of(&MP4_CATALOG_ID).next() {
+        return process_data(data, "cnID");
+    }
+
+    // check free-form
+    if let Some(data) = tag.data_of(&MP4_ITUNES_CUSTOM_CATALOG_ID).next() {
+        return process_data(data, "ITUNESCATALOGID");
     }
 
     Ok(None)
